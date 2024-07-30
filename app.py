@@ -4,6 +4,7 @@ from datetime import datetime
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os,time
+from bson.objectid import ObjectId
 
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 1
@@ -18,7 +19,7 @@ mongo_uri = os.getenv('MONGO_URI')
 client = MongoClient(mongo_uri)
 db = client.chessclub
 users_collection = db.registered_users
-
+Tornument_collection = db.TornumentTimings
 @app.route('/')
 def home():
     return "Hello, Flask on Vercel!"
@@ -84,5 +85,46 @@ def get_users():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route('/tournament-timings', methods=['GET'])
+def get_tournament_timings():
+    try:
+        # Fetch the latest document from the TornumentTimings collection
+        timing_document = Tornument_collection.find_one({}, sort=[('_id', -1)])
+        if timing_document:
+            # Convert ObjectId to string for JSON serialization
+            timing_document['_id'] = str(timing_document['_id'])
+            return jsonify(timing_document['TornumentTimings']), 200
+        else:
+            return jsonify({"error": "No tournament timings found"}), 404
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return jsonify({"error": "An error occurred while fetching tournament timings"}), 500
+
+
+@app.route('/update_tournament', methods=['PUT'])
+def update_tournament():
+    data = request.json
+    
+    tournament_id = "66a8c52fad0e6b211e580cda"
+    new_timing = data['TornumentTimings']
+
+    # Attempt to update the tournament timing in the collection with retries
+    for attempt in range(MAX_RETRIES):
+        try:
+            result = Tornument_collection.update_one(
+                {'_id': ObjectId(tournament_id)},
+                {'$set': {'TornumentTimings': new_timing, 'updated_at': time_now()}}
+            )
+            if result.matched_count == 0:
+                return jsonify({'error': 'No record found with the provided ID'}), 404
+            return jsonify({'message': 'Tournament timing updated successfully!'}), 200
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            time.sleep(RETRY_DELAY_SECONDS)
+
+    return jsonify({'error': 'Failed to update tournament timing after multiple attempts'}), 500
+
+
+
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=80)
