@@ -5,6 +5,10 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os,time
 from bson.objectid import ObjectId
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+ 
 
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 1
@@ -26,6 +30,40 @@ def home():
 
 def time_now():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+SENDER_EMAIL = os.getenv('SENDER_EMAIL', 'kidschesstournament@gmail.com')
+SENDER_PASSWORD = os.getenv('SENDER_PASSWORD', 'rrcd xdhn dpig ijqk')
+
+@app.route('/send-email', methods=['POST'])
+def send_email():
+    try:
+        data = request.get_json()
+        recipient_email = data['email']
+        subject = data.get('subject', 'Registration Confirmation')
+        body = data.get('body', 'Thank you for registering for the Kids Chess Tournament!')
+
+        # Set up the MIME
+        msg = MIMEMultipart()
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        # Connect to Gmail's SMTP server
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(SENDER_EMAIL, SENDER_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(SENDER_EMAIL, recipient_email, text)
+        server.quit()
+
+        return jsonify({"message": "Email sent successfully!"}), 200
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({"message": "Failed to send email."}), 500
+
+
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -127,4 +165,4 @@ def update_tournament():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run()
