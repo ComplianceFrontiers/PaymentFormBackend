@@ -32,8 +32,8 @@ def time_now():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
-SENDER_EMAIL = os.getenv('SENDER_EMAIL', 'kidschesstournament@gmail.com')
-SENDER_PASSWORD = os.getenv('SENDER_PASSWORD', 'rrcd xdhn dpig ijqk')
+SENDER_EMAIL = os.getenv('SENDER_EMAIL', 'connect@chesschamps.us')
+SENDER_PASSWORD = os.getenv('SENDER_PASSWORD', 'iyln tkpp vlpo sjep')
 
 @app.route('/send-email', methods=['POST'])
 def send_email():
@@ -165,4 +165,4 @@ def update_tournament():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=80)
