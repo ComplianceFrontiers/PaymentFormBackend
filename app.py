@@ -160,7 +160,7 @@ def update_tournament():
             print(f"Attempt {attempt + 1} failed: {e}")
             time.sleep(RETRY_DELAY_SECONDS)
 
-    return jsonify({'error': 'Failed to update tournament timing after multiple attempts'}), 500
+    return jsonify({'error': 'Failed to update tournament timing after multiple  attempts'}), 500
 
 
 
